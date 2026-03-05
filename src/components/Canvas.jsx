@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 
-const Canvas = () => {
+const Canvas = ({ brushColor = '#000000', brushSize = 5 }) => {
     const canvasRef = useRef(null);
     const [isDrawing, setIsDrawing] = useState(false);
     const [lastPoint, setLastPoint] = useState(null);
@@ -17,13 +17,13 @@ const Canvas = () => {
             const rect = parent.getBoundingClientRect();
             const dpr = window.devicePixelRatio || 1;
 
-            // Obtenemos el contexto
             const ctx = canvas.getContext('2d');
-            // Guardamos la configuración visual antes de limpiar
-            const lineCap = ctx.lineCap || 'round';
-            const lineJoin = ctx.lineJoin || 'round';
-            const strokeStyle = ctx.strokeStyle || '#f5f5f7';
-            const lineWidth = ctx.lineWidth || 5;
+
+            // Save image data so we don't lose drawing on window resize
+            let imageData = null;
+            if (canvas.width > 0 && canvas.height > 0) {
+                imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            }
 
             // Physical scale
             canvas.width = rect.width * dpr;
@@ -36,11 +36,10 @@ const Canvas = () => {
             // Normalize coordinate system to CSS pixels
             ctx.scale(dpr, dpr);
 
-            // Restauramos la configuración
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.strokeStyle = '#f5f5f7'; // var(--text-main)
-            ctx.lineWidth = 5;
+            // Restore image data
+            if (imageData) {
+                ctx.putImageData(imageData, 0, 0);
+            }
         };
 
         window.addEventListener('resize', resizeCanvas);
@@ -53,6 +52,13 @@ const Canvas = () => {
         const { offsetX, offsetY, pressure, pointerType } = e.nativeEvent;
 
         const ctx = canvasRef.current.getContext('2d');
+
+        // Set current styles here to avoid using them in useEffect dependencies
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = brushColor;
+        ctx.lineWidth = brushSize;
+
         ctx.beginPath();
         ctx.moveTo(offsetX, offsetY);
 

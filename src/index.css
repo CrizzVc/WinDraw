@@ -1,8 +1,9 @@
 :root {
-  --bg-color: #121212;
-  --panel-bg: rgba(255, 255, 255, 0.08);
-  --panel-border: rgba(255, 255, 255, 0.15);
-  --text-main: #f5f5f7;
+  --bg-color: #ffffff;
+  --panel-bg: rgba(255, 255, 255, 0.7);
+  --panel-border: rgba(0, 0, 0, 0.1);
+  --panel-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+  --text-main: #333333;
   --accent: #007aff;
 }
 
@@ -16,8 +17,10 @@ body {
   background-color: var(--bg-color);
   color: var(--text-main);
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-  overflow: hidden; /* Evita scrolls no deseados en la app de dibujo */
-  user-select: none; /* Evita que el usuario seleccione texto al dibujar */
+  overflow: hidden;
+  /* Evita scrolls no deseados en la app de dibujo */
+  user-select: none;
+  /* Evita que el usuario seleccione texto al dibujar */
 }
 
 #root {
