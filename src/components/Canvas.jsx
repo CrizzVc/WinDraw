@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 
-const Canvas = forwardRef(({ brushColor = '#000000', brushSize = 5, isEraser = false, onHistoryChange }, ref) => {
+const Canvas = forwardRef(({ brushColor = '#000000', brushSize = 5, isEraser = false, onHistoryChange, isActive = true }, ref) => {
     const canvasRef = useRef(null);
     const [isDrawing, setIsDrawing] = useState(false);
     const [lastPoint, setLastPoint] = useState(null);
@@ -21,8 +21,8 @@ const Canvas = forwardRef(({ brushColor = '#000000', brushSize = 5, isEraser = f
         const nextStep = historyStepRef.current + 1;
         historyRef.current.splice(nextStep);
 
-        // limit history size to 20 states
-        if (historyRef.current.length >= 20) {
+        // limit history size to 10 states (para ahorrar memoria)
+        if (historyRef.current.length >= 10) {
             historyRef.current.shift();
         } else {
             historyStepRef.current += 1;
@@ -33,13 +33,20 @@ const Canvas = forwardRef(({ brushColor = '#000000', brushSize = 5, isEraser = f
     };
 
     const updateHistoryState = () => {
-        if (onHistoryChange) {
+        if (onHistoryChange && isActive) {
             onHistoryChange({
                 canUndo: historyStepRef.current > 0,
                 canRedo: historyStepRef.current < historyRef.current.length - 1
             });
         }
     };
+
+    // Update history state when becoming active layer
+    useEffect(() => {
+        if (isActive) {
+            updateHistoryState();
+        }
+    }, [isActive]);
 
     useImperativeHandle(ref, () => ({
         clear: () => {
@@ -116,6 +123,7 @@ const Canvas = forwardRef(({ brushColor = '#000000', brushSize = 5, isEraser = f
     }, []);
 
     const startDrawing = (e) => {
+        if (!isActive) return;
         const { offsetX, offsetY, pressure, pointerType } = e.nativeEvent;
 
         const ctx = canvasRef.current.getContext('2d');
@@ -134,6 +142,7 @@ const Canvas = forwardRef(({ brushColor = '#000000', brushSize = 5, isEraser = f
     };
 
     const draw = (e) => {
+        if (!isActive) return;
         const { offsetX, offsetY, pressure, pointerType } = e.nativeEvent;
 
         // Update custom cursor
@@ -151,7 +160,7 @@ const Canvas = forwardRef(({ brushColor = '#000000', brushSize = 5, isEraser = f
     };
 
     const stopDrawing = () => {
-        if (!isDrawing) return;
+        if (!isActive || !isDrawing) return;
         const ctx = canvasRef.current.getContext('2d');
         ctx.closePath();
         setIsDrawing(false);
@@ -162,8 +171,11 @@ const Canvas = forwardRef(({ brushColor = '#000000', brushSize = 5, isEraser = f
 
     return (
         <div
-            style={{ width: '100%', height: '100%', position: 'relative' }}
-            onPointerEnter={() => setIsHovering(true)}
+            style={{
+                width: '100%', height: '100%', position: 'relative',
+                pointerEvents: isActive ? 'auto' : 'none'
+            }}
+            onPointerEnter={() => isActive && setIsHovering(true)}
             onPointerLeave={() => { setIsHovering(false); stopDrawing(); }}
         >
             <canvas
@@ -178,7 +190,7 @@ const Canvas = forwardRef(({ brushColor = '#000000', brushSize = 5, isEraser = f
                 }}
             />
             {/* Custom Cursor Overlay */}
-            {isHovering && (
+            {isActive && isHovering && (
                 <div
                     style={{
                         position: 'absolute',
@@ -187,9 +199,9 @@ const Canvas = forwardRef(({ brushColor = '#000000', brushSize = 5, isEraser = f
                         width: brushSize,
                         height: brushSize,
                         borderRadius: '50%',
-                        backgroundColor: isEraser ? 'rgba(255,255,255,0.5)' : brushColor,
-                        border: '1px solid #000000', // Black border for visibility on any background
-                        boxShadow: '0 0 0 1px rgba(255,255,255,0.8)', // Inner white ring for contrast
+                        backgroundColor: 'transparent',
+                        border: '2px solid rgba(0,0,0,0.8)', // Borde negro más visible
+                        boxShadow: '0 0 0 1px rgba(255,255,255,0.8), inset 0 0 0 1px rgba(255,255,255,0.8)', // Contraste blanco afuera y adentro
                         transform: 'translate(-50%, -50%)',
                         pointerEvents: 'none',
                         zIndex: 9999
