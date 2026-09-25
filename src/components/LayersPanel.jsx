@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './LayersPanel.css';
 import { PlusIcon, CloseIcon, CheckIcon } from './icons';
 
@@ -23,8 +23,45 @@ const LayersPanel = ({
     onSelectLayer,
     onToggleVisibility,
     onDeleteLayer,
-    onBlendChange
+    onBlendChange,
+    onReorder
 }) => {
+    const [dragId, setDragId] = useState(null);
+    const [overId, setOverId] = useState(null);
+    const [dropSide, setDropSide] = useState(null);
+
+    const clearDragState = () => {
+        setDragId(null);
+        setOverId(null);
+        setDropSide(null);
+    };
+
+    const handleDragStart = (e, id) => {
+        setDragId(id);
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', String(id));
+    };
+
+    const handleDragOver = (e, id) => {
+        if (dragId === null || dragId === id) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        const rect = e.currentTarget.getBoundingClientRect();
+        const side = e.clientY < rect.top + rect.height / 2 ? 'top' : 'bottom';
+        if (overId !== id || dropSide !== side) {
+            setOverId(id);
+            setDropSide(side);
+        }
+    };
+
+    const handleDrop = (e, id) => {
+        e.preventDefault();
+        if (dragId !== null && dragId !== id) {
+            onReorder(dragId, id, dropSide || 'bottom');
+        }
+        clearDragState();
+    };
+
     return (
         <aside className={`layers-panel ${open ? '' : 'closed'}`}>
             <div className="layers-header">
@@ -39,11 +76,24 @@ const LayersPanel = ({
                     const isActive = activeLayerId === layer.id;
                     const currentBlend = BLEND_MODES[blendIndex(layer.blendMode)];
                     const nextBlend = BLEND_MODES[(blendIndex(layer.blendMode) + 1) % BLEND_MODES.length];
+                    const isDragged = dragId === layer.id;
+                    const showIndicator = dragId !== null && overId === layer.id && !isDragged;
 
                     return (
                         <div
                             key={layer.id}
-                            className={`layer-item ${isActive ? 'active' : ''}`}
+                            data-layer-id={layer.id}
+                            className={[
+                                'layer-item',
+                                isActive ? 'active' : '',
+                                isDragged ? 'dragging' : '',
+                                showIndicator ? `drop-${dropSide}` : ''
+                            ].join(' ').trim()}
+                            draggable
+                            onDragStart={(e) => handleDragStart(e, layer.id)}
+                            onDragOver={(e) => handleDragOver(e, layer.id)}
+                            onDrop={(e) => handleDrop(e, layer.id)}
+                            onDragEnd={clearDragState}
                             onClick={() => onSelectLayer(layer.id)}
                         >
                             <div className="layer-thumb">

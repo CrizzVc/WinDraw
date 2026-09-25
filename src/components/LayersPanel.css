@@ -104,6 +104,34 @@
     background: var(--accent);
 }
 
+/* Drag to reorder */
+.layer-item.dragging {
+    opacity: 0.35;
+    cursor: grabbing;
+}
+
+.layer-item.drop-top::before,
+.layer-item.drop-bottom::after {
+    content: '';
+    position: absolute;
+    left: 4px;
+    right: 4px;
+    height: 2.5px;
+    background: var(--accent);
+    border-radius: 2px;
+    box-shadow: 0 0 4px rgba(10, 132, 255, 0.6);
+    z-index: 3;
+    pointer-events: none;
+}
+
+.layer-item.drop-top::before {
+    top: -3px;
+}
+
+.layer-item.drop-bottom::after {
+    bottom: -3px;
+}
+
 .layer-thumb {
     width: 60px;
     height: 44px;

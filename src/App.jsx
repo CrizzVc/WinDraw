@@ -3,6 +3,7 @@ import Canvas from './components/Canvas';
 import TopBar from './components/TopBar';
 import LeftRail from './components/LeftRail';
 import LayersPanel from './components/LayersPanel';
+import { reorderLayers } from './utils/reorder';
 
 const THUMB_W = 120;
 const THUMB_H = 90;
@@ -72,6 +73,10 @@ function App() {
         setLayers((prev) =>
             prev.map((l) => (l.id === id ? { ...l, blendMode } : l))
         );
+    };
+
+    const reorderLayer = (dragId, targetId, placement) => {
+        setLayers((prev) => reorderLayers(prev, dragId, targetId, placement));
     };
 
     const refreshThumb = (layerId) => {
@@ -178,6 +183,7 @@ function App() {
                 onToggleVisibility={toggleLayerVisibility}
                 onDeleteLayer={deleteLayer}
                 onBlendChange={changeLayerBlend}
+                onReorder={reorderLayer}
             />
         </div>
     );
