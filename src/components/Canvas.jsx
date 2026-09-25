@@ -49,6 +49,7 @@ const Canvas = forwardRef(({ brushColor = '#000000', brushSize = 5, isEraser = f
     }, [isActive]);
 
     useImperativeHandle(ref, () => ({
+        getCanvas: () => canvasRef.current,
         clear: () => {
             const canvas = canvasRef.current;
             const ctx = canvas.getContext('2d');
